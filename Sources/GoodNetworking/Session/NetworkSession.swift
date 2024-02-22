@@ -6,7 +6,22 @@
 //
 
 import Alamofire
+import Combine
 import Foundation
+
+#if canImport(AppDebugModeInterceptable)
+import AppDebugModeInterceptable
+#endif
+
+private extension Future where Failure == Never {
+
+    convenience init(_ asyncFunction: @escaping () async -> Output) {
+        self.init { (promise: @escaping (Result<Output, Never>) -> Void) in
+            Task { promise(.success(await asyncFunction())) }
+        }
+    }
+
+}
 
 /// Executes network requests for the client app.
 public class NetworkSession {
@@ -32,8 +47,15 @@ public class NetworkSession {
         self.baseUrl = baseUrl
         self.configuration = configuration
 
+        #if canImport(AppDebugModeInterceptable)
+            let startImmediately = false
+        #else
+            let startImmediately = true
+        #endif
+
         session = .init(
             configuration: configuration.urlSessionConfiguration,
+            startRequestsImmediately: startImmediately,
             interceptor: configuration.interceptor,
             serverTrustManager: configuration.serverTrustManager,
             eventMonitors: configuration.eventMonitors
@@ -52,16 +74,38 @@ public extension NetworkSession {
     ///   - endpoint: A GREndpoint instance representing the endpoint.
     ///   - base: An optional BaseURL instance representing the base URL. If not provided, the default `baseUrl` property will be used.
     /// - Returns: A DataRequest object that is ready to be executed.
-    func request(endpoint: Endpoint, base: String? = nil) -> DataRequest {
+    func request(endpoint: Endpoint, base: String? = nil) -> Future<DataRequest, Never> {
         let baseUrl = base ?? baseUrl ?? ""
 
-        return session.request(
-            try? endpoint.url(on: baseUrl),
-            method: endpoint.method,
-            parameters: endpoint.parameters?.dictionary,
-            encoding: endpoint.encoding,
-            headers: endpoint.headers
-        )
+#if canImport(AppDebugModeInterceptable)
+        if #available(iOS 17.0, *) {
+            return Future { [self] in
+                await withInterceptionProvider { [self] provider in
+                    let interceptedEndpoint = await provider.intercept(requestTo: endpoint)
+
+                    return session.request(
+                        try? interceptedEndpoint.url(on: baseUrl),
+                        method: interceptedEndpoint.method,
+                        parameters: interceptedEndpoint.parameters?.dictionary,
+                        encoding: interceptedEndpoint.encoding,
+                        headers: interceptedEndpoint.headers
+                    )
+                }
+            }
+        } else {
+            fatalError("AppDebugModeInterceptable is available on iOS 17.0 and higher")
+        }
+#else
+        return Future { [self] in
+            session.request(
+                try? endpoint.url(on: baseUrl),
+                method: endpoint.method,
+                parameters: endpoint.parameters?.dictionary,
+                encoding: endpoint.encoding,
+                headers: endpoint.headers
+            )
+        }
+#endif
     }
 
 }
@@ -134,3 +178,11 @@ public extension NetworkSession {
     }
 
 }
+
+// MARK: - Public - Global functions
+
+#if canImport(AppDebugModeInterceptable)
+public func setupInterceptor() {
+    print("✅ [GoodNetworking] AppDebugModeInterceptable installed")
+}
+#endif

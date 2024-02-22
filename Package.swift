@@ -6,13 +6,19 @@ import PackageDescription
 let package = Package(
     name: "GoodNetworking",
     platforms: [
-        .iOS(.v13)
+        .iOS(.v14)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "GoodNetworking",
-            targets: ["GoodNetworking"]
+            type: .dynamic,
+            targets: ["GoodNetworking-Internal-Source"]
+        ),
+        .library(
+            name: "GoodNetworking-Shared",
+            type: .dynamic,
+            targets: ["GoodNetworking-Shared-Source"]
         ),
         .library(
             name: "Mockable",
@@ -28,28 +34,38 @@ let package = Package(
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
-            name: "GoodNetworking",
+            name: "GoodNetworking-Internal-Source",
             dependencies: [
+                .targetItem(name: "GoodNetworking-Shared", condition: nil),
                 .product(name: "Alamofire", package: "Alamofire"),
                 .product(name: "AlamofireImage", package: "AlamofireImage")
             ],
             path: "./Sources/GoodNetworking"
         ),
         .target(
+            name: "GoodNetworking-Shared-Source",
+            dependencies: [
+                .product(name: "Alamofire", package: "Alamofire")
+            ],
+            path: "./Sources/GoodNetworking-Shared"
+        ),
+        .target(
             name: "Mockable",
-            dependencies: ["GoodNetworking"],
+            dependencies: [
+                .targetItem(name: "GoodNetworking", condition: nil),
+                .targetItem(name: "GoodNetworking-Shared", condition: nil)
+            ],
             path: "./Sources/Mockable"
         ),
         .testTarget(
             name: "GoodNetworkingTests",
             dependencies: ["GoodNetworking", "Mockable"],
-            resources:
-                [
-                    .copy("Resources/EmptyElement.json"),
-                    .copy("Resources/ArrayNil.json"),
-                    .copy("Resources/IsoDate.json"),
-                    .copy("Resources/MilisecondsDate.json")
-                ]
+            resources: [
+                .copy("Resources/EmptyElement.json"),
+                .copy("Resources/ArrayNil.json"),
+                .copy("Resources/IsoDate.json"),
+                .copy("Resources/MilisecondsDate.json")
+            ]
         ),
     ]
 )

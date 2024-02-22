@@ -9,6 +9,33 @@ import Foundation
 import Alamofire
 import Combine
 
+public extension Future where Output == DataRequest, Failure == Never {
+
+    func goodify<T: Decodable>(
+        type: T.Type = T.self,
+        queue: DispatchQueue = .main,
+        preprocessor: DataPreprocessor = DecodableResponseSerializer<T>.defaultDataPreprocessor,
+        emptyResponseCodes: Set<Int> = DecodableResponseSerializer<T>.defaultEmptyResponseCodes,
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<T>.defaultEmptyRequestMethods,
+        decoder: JSONDecoder = (T.self as? WithCustomDecoder.Type)?.decoder ?? JSONDecoder()
+    ) -> AnyPublisher<T, AFError> {
+        let serializer = DecodableResponseSerializer<T>(
+            dataPreprocessor: preprocessor,
+            decoder: decoder,
+            emptyResponseCodes: emptyResponseCodes,
+            emptyRequestMethods: emptyResponseMethods
+        )
+
+        return self.flatMap {
+            $0.validate()
+                .publishResponse(using: serializer, on: queue)
+                .value()
+        }
+        .eraseToAnyPublisher()
+    }
+
+}
+
 @available(iOS 13, *)
 public extension DataRequest {
 

@@ -18,15 +18,15 @@ public protocol Endpoint {
     
     /// HTTP method to be used for the request.
     var method: HTTPMethod { get }
-    
-    /// Parameters to be sent with the request.
-    var parameters: EndpointParameters? { get }
-    
+
     /// HTTP headers to be added to the request.
     var headers: HTTPHeaders? { get }
-    
+
     /// Encoding to be used for encoding the parameters.
     var encoding: ParameterEncoding { get }
+
+    /// Parameters to be sent with the request.
+    var parameters: EndpointParameters? { get }
 
     /// Creates a URL by combining `path` with `baseUrl`.
     /// This function is a customization point for modifying the URL by current runtime,

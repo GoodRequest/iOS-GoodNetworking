@@ -20,7 +20,7 @@ public protocol Mockable {
 ///
 /// - urlNotValid: The URL to the file is not valid. This can occur if the file does not exist in the given bundle.
 /// - emptyJsonData: The contents of the file could not be loaded into data.
-public enum  JSONTestableError: Error {
+public enum JSONTestableError: Error {
 
     case urlNotValid
     case emptyJsonData
