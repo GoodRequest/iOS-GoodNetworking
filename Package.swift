@@ -11,17 +11,16 @@ let package = Package(
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
-            name: "GoodNetworking",
-            type: .dynamic,
-            targets: ["GoodNetworking-Internal-Source"]
+            name: "GoodNetworking-iOS",
+            targets: ["GoodNetworking"]
         ),
         .library(
-            name: "GoodNetworking-Shared",
+            name: "GoodNetworking-Shared-iOS",
             type: .dynamic,
-            targets: ["GoodNetworking-Shared-Source"]
+            targets: ["GoodNetworking_Shared"]
         ),
         .library(
-            name: "Mockable",
+            name: "Mockable-iOS",
             targets: ["Mockable"]
         )
     ],
@@ -34,16 +33,16 @@ let package = Package(
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
-            name: "GoodNetworking-Internal-Source",
+            name: "GoodNetworking",
             dependencies: [
-                .targetItem(name: "GoodNetworking-Shared", condition: nil),
+                .target(name: "GoodNetworking_Shared"),
                 .product(name: "Alamofire", package: "Alamofire"),
                 .product(name: "AlamofireImage", package: "AlamofireImage")
             ],
             path: "./Sources/GoodNetworking"
         ),
         .target(
-            name: "GoodNetworking-Shared-Source",
+            name: "GoodNetworking_Shared",
             dependencies: [
                 .product(name: "Alamofire", package: "Alamofire")
             ],
@@ -52,14 +51,17 @@ let package = Package(
         .target(
             name: "Mockable",
             dependencies: [
-                .targetItem(name: "GoodNetworking", condition: nil),
-                .targetItem(name: "GoodNetworking-Shared", condition: nil)
+                .target(name: "GoodNetworking"),
+                .target(name: "GoodNetworking_Shared")
             ],
             path: "./Sources/Mockable"
         ),
         .testTarget(
             name: "GoodNetworkingTests",
-            dependencies: ["GoodNetworking", "Mockable"],
+            dependencies: [
+                .target(name: "GoodNetworking"),
+                .target(name: "Mockable")
+            ],
             resources: [
                 .copy("Resources/EmptyElement.json"),
                 .copy("Resources/ArrayNil.json"),
