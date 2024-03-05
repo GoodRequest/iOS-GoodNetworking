@@ -9,8 +9,8 @@ import Alamofire
 import Combine
 import Foundation
 
-#if canImport(AppDebugModeInterceptable)
-import AppDebugModeInterceptable
+#if canImport(AppDebugMode)
+import AppDebugMode
 #endif
 
 private extension Future where Failure == Never {
@@ -47,7 +47,7 @@ public class NetworkSession {
         self.baseUrl = baseUrl
         self.configuration = configuration
 
-        #if canImport(AppDebugModeInterceptable)
+        #if canImport(AppDebugMode)
             let startImmediately = false
         #else
             let startImmediately = true
@@ -77,7 +77,7 @@ public extension NetworkSession {
     func request(endpoint: Endpoint, base: String? = nil) -> Future<DataRequest, Never> {
         let baseUrl = base ?? baseUrl ?? ""
 
-#if canImport(AppDebugModeInterceptable)
+#if canImport(AppDebugMode)
         if #available(iOS 17.0, *) {
             return Future { [self] in
                 await withInterceptionProvider { [self] provider in
@@ -181,7 +181,7 @@ public extension NetworkSession {
 
 // MARK: - Public - Global functions
 
-#if canImport(AppDebugModeInterceptable)
+#if canImport(AppDebugMode)
 public func setupInterceptor() {
     print("✅ [GoodNetworking] AppDebugModeInterceptable installed")
 }

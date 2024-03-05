@@ -16,7 +16,6 @@ let package = Package(
         ),
         .library(
             name: "GoodNetworking-Shared-iOS",
-            type: .dynamic,
             targets: ["GoodNetworking_Shared"]
         ),
         .library(
