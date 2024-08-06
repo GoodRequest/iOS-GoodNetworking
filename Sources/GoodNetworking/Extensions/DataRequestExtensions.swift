@@ -81,6 +81,49 @@ public extension DataRequest {
             .value()
     }
 
+    func goodifyAsync<T: Decodable & Sendable>(
+        type: T.Type = T.self,
+        validResponseCodes: Set<Int> = Set(200..<299),
+        emptyResponseCodes: Set<Int> = DecodableResponseSerializer<T>.defaultEmptyResponseCodes,
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<T>.defaultEmptyRequestMethods
+    ) async throws -> T {
+        do {
+            return try await self
+                .validate(statusCode: validResponseCodes)
+                .serializingDecodable(
+                    T.self,
+                    automaticallyCancelling: true,
+                    emptyResponseCodes: emptyResponseCodes,
+                    emptyRequestMethods: emptyResponseMethods
+                )
+                .value
+        } catch let afError as AFError {
+            // potentionally the place for alamofire non fatal crashes logger
+            throw afError
+        } catch {
+            throw error
+        }
+    }
+
+
+    func goodifyAsync<T: Decodable & Sendable>(
+        type: T.Type = T.self,
+        validResponseCodes: Set<Int> = Set(200..<299),
+        emptyResponseCodes: Set<Int> = DecodableResponseSerializer<T>.defaultEmptyResponseCodes,
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<T>.defaultEmptyRequestMethods
+    ) async -> DataResponse<T, AFError> {
+        await self
+            .validate(statusCode: validResponseCodes)
+            .serializingDecodable(
+                T.self,
+                automaticallyCancelling: true,
+                emptyResponseCodes: emptyResponseCodes,
+                emptyRequestMethods: emptyResponseMethods
+            )
+            .response
+    }
+
+
 }
 
 // MARK: - Private

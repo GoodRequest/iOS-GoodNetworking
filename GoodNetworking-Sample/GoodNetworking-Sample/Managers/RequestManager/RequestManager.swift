@@ -24,8 +24,7 @@ final class RequestManager: RequestManagerType {
     }
 
     func fetchHero(heroId: Int) -> RequestPublisher<HeroResponse> {
-        return session.request(endpoint: Endpoint.hero(id: heroId))
-            .goodify()
+        return session.execute(endpoint: Endpoint.hero(id: heroId))
             .eraseToAnyPublisher()
     }
 

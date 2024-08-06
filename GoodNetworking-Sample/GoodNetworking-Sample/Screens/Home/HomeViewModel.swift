@@ -49,13 +49,18 @@ final class HomeViewModel {
 extension HomeViewModel {
 
     func fetchHero() {
-        di.requestManager.fetchHero(heroId: Int.random(in: Constants.Hero.range))
-            .map{ HeroFetchingResultState.success($0) }
-            .catch { Just(HeroFetchingResultState.error($0)) }
-            .prepend(HeroFetchingResultState.loading)
-            .eraseToAnyPublisher()
-            .sink { [weak self] result in self?.heroResult.send(result) }
-            .store(in: &cancellables)
+//        di.requestManager.fetchHero(heroId: Int.random(in: Constants.Hero.range))
+        let heroID = Int.random(in: Constants.Hero.range)
+        return Publishers.Merge(
+            di.requestManager.fetchHero(heroId: heroID),
+            di.requestManager.fetchHero(heroId: heroID)
+        )
+        .map{ HeroFetchingResultState.success($0) }
+        .catch { Just(HeroFetchingResultState.error($0)) }
+        .prepend(HeroFetchingResultState.loading)
+        .eraseToAnyPublisher()
+        .sink { [weak self] result in self?.heroResult.send(result) }
+        .store(in: &cancellables)
     }
 
     func goToAbout() {
