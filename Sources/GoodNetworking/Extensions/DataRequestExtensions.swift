@@ -81,6 +81,81 @@ public extension DataRequest {
             .value()
     }
 
+    /// Returns a `T` response or thrown an error  for this instance and uses a ``serializingDecodable`` method to serialize the
+    /// response.
+    ///
+    /// - Parameters:
+    ///   - type:                `Decodable` type to which to decode response `Data`. Inferred from the context by default.
+    ///   - validResponseCodes:  `Set<Int>` of acceptable HTTP  status code in the default acceptable range of 200…299.
+    ///   - emptyResponseCodes:  `Set<Int>` of HTTP status codes for which empty responses are allowed. `[204, 205]` by
+    ///                          default.
+    ///   - emptyRequestMethods: `Set<HTTPMethod>` of `HTTPMethod`s for which empty responses are allowed, regardless of
+    ///                          status code. `[.head]` by default.
+    ///   - decoder:             `JSONDecoder` instance used to decode response `Data`. For `Decodable` `JSONDecoder()` by default.
+    ///                          For `Decodable & WithCustomDecoder` custom `decoder` used by default.
+    ///
+    /// - Returns:               The `DataResponsePublisher`.
+    func goodifyAsync<T: Decodable & Sendable>(
+        type: T.Type = T.self,
+        validResponseCodes: Set<Int> = Set(200..<299),
+        emptyResponseCodes: Set<Int> = DecodableResponseSerializer<T>.defaultEmptyResponseCodes,
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<T>.defaultEmptyRequestMethods,
+        decoder: JSONDecoder = (T.self as? WithCustomDecoder.Type)?.decoder ?? JSONDecoder()
+    ) async throws -> T {
+        do {
+            return try await self
+                .validate(statusCode: validResponseCodes)
+                .serializingDecodable(
+                    T.self,
+                    automaticallyCancelling: true,
+                    decoder: decoder,
+                    emptyResponseCodes: emptyResponseCodes,
+                    emptyRequestMethods: emptyResponseMethods
+                )
+                .value
+        } catch let afError as AFError {
+            // potentionally the place for alamofire non fatal crashes logger
+            throw afError
+        } catch {
+            throw error
+        }
+    }
+
+
+    /// Returns a `DataResponse<T, AFError>` for this instance and uses a ``serializingDecodable`` method to serialize the
+    /// response.
+    ///
+    /// - Parameters:
+    ///   - type:                `Decodable` type to which to decode response `Data`. Inferred from the context by default.
+    ///   - validResponseCodes:  `Set<Int>` of acceptable HTTP  status code in the default acceptable range of 200…299.
+    ///   - emptyResponseCodes:  `Set<Int>` of HTTP status codes for which empty responses are allowed. `[204, 205]` by
+    ///                          default.
+    ///   - emptyRequestMethods: `Set<HTTPMethod>` of `HTTPMethod`s for which empty responses are allowed, regardless of
+    ///                          status code. `[.head]` by default.
+    ///   - decoder:             `JSONDecoder` instance used to decode response `Data`. For `Decodable` `JSONDecoder()` by default.
+    ///                          For `Decodable & WithCustomDecoder` custom `decoder` used by default.
+    ///
+    /// - Returns:               The `DataResponsePublisher`.
+    func goodifyAsync<T: Decodable & Sendable>(
+        type: T.Type = T.self,
+        validResponseCodes: Set<Int> = Set(200..<299),
+        emptyResponseCodes: Set<Int> = DecodableResponseSerializer<T>.defaultEmptyResponseCodes,
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<T>.defaultEmptyRequestMethods,
+        decoder: JSONDecoder = (T.self as? WithCustomDecoder.Type)?.decoder ?? JSONDecoder()
+    ) async -> DataResponse<T, AFError> {
+        await self
+            .validate(statusCode: validResponseCodes)
+            .serializingDecodable(
+                T.self,
+                automaticallyCancelling: true,
+                decoder: decoder,
+                emptyResponseCodes: emptyResponseCodes,
+                emptyRequestMethods: emptyResponseMethods
+            )
+            .response
+    }
+
+
 }
 
 // MARK: - Private
