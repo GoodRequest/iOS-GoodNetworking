@@ -103,13 +103,15 @@ public extension NetworkSession {
     ///   - validResponseCodes: A set of valid HTTP response codes. Default is all codes from 200 to 299.
     ///   - emptyResponseCodes: A set of HTTP response codes that indicate an empty response. Default is the `DecodableResponseSerializer` default empty response codes for the specified `ResultType`.
     ///   - emptyResponseMethods: A set of HTTP methods that indicate an empty response. Default is the `DecodableResponseSerializer` default empty request methods for the specified `ResultType`.
+    ///   - cacheTimeout: The time interval to cache the successful response. Default is `0` (no cache).
     /// - Returns: A `DataResponse` containing the result of the request, which includes either the decoded result of type `ResultType` or an `AFError`.
     func execute<ResultType: Decodable>(
         request: DataRequest,
         deduplicate: Bool = true,
         validResponseCodes: Set<Int> = Set(200..<300),
         emptyResponseCodes: Set<Int> = DecodableResponseSerializer<ResultType>.defaultEmptyResponseCodes,
-        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods,
+        cacheTimeout: TimeInterval = 0
     ) async -> DataResponse<ResultType, AFError> {
         let taskID = request.convertible.urlRequest?.url?.absoluteString ?? UUID().uuidString
 
@@ -119,7 +121,8 @@ public extension NetworkSession {
             deduplicate: deduplicate,
             validResponseCodes: validResponseCodes,
             emptyResponseCodes: emptyResponseCodes,
-            emptyResponseMethods: emptyResponseMethods
+            emptyResponseMethods: emptyResponseMethods,
+            cacheTimeout: cacheTimeout
         )
     }
 
@@ -135,6 +138,7 @@ public extension NetworkSession {
     ///   - validResponseCodes: A set of valid HTTP response codes. Default is all codes from 200 to 299.
     ///   - emptyResponseCodes: A set of HTTP response codes that indicate an empty response. Default is the `DecodableResponseSerializer` default empty response codes for the specified `ResultType`.
     ///   - emptyResponseMethods: A set of HTTP methods that indicate an empty response. Default is the `DecodableResponseSerializer` default empty request methods for the specified `ResultType`.
+    ///   - cacheTimeout: The time interval to cache the successful response. Default is `0` (no cache).
     /// - Returns: A `DataResponse` containing the result of the request, which includes either the decoded result of type `ResultType` or an `AFError`.
     func execute<ResultType: Decodable>(
         endpoint: Endpoint,
@@ -142,7 +146,8 @@ public extension NetworkSession {
         deduplicate: Bool = true,
         validResponseCodes: Set<Int> = Set(200..<300),
         emptyResponseCodes: Set<Int> = DecodableResponseSerializer<ResultType>.defaultEmptyResponseCodes,
-        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods,
+        cacheTimeout: TimeInterval = 0
     ) async -> DataResponse<ResultType, AFError> {
         let baseUrl = base ?? baseUrl ?? ""
         let taskID = (try? endpoint.url(on: baseUrl).absoluteString) ?? UUID().uuidString
@@ -154,7 +159,8 @@ public extension NetworkSession {
             deduplicate: deduplicate,
             validResponseCodes: validResponseCodes,
             emptyResponseCodes: emptyResponseCodes,
-            emptyResponseMethods: emptyResponseMethods
+            emptyResponseMethods: emptyResponseMethods,
+            cacheTimeout: cacheTimeout
         )
     }
 
@@ -176,13 +182,15 @@ public extension NetworkSession {
     ///   - validResponseCodes: A set of valid HTTP response codes. Default is all codes from 200 to 299.
     ///   - emptyResponseCodes: A set of HTTP response codes that indicate an empty response. Default is the `DecodableResponseSerializer` default empty response codes for the specified `ResultType`.
     ///   - emptyResponseMethods: A set of HTTP methods that indicate an empty response. Default is the `DecodableResponseSerializer` default empty request methods for the specified `ResultType`.
+    ///   - cacheTimeout: The time interval to cache the successful response. Default is `0` (no cache).
     /// - Returns: A Publisher of `DataResponse` containing the result of the request, which includes either the decoded result of type `ResultType` or an `AFError`.
     func execute<ResultType: Decodable>(
         request: DataRequest,
         deduplicate: Bool = true,
         validResponseCodes: Set<Int> = Set(200..<300),
         emptyResponseCodes: Set<Int> = DecodableResponseSerializer<ResultType>.defaultEmptyResponseCodes,
-        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods,
+        cacheTimeout: TimeInterval = 0
     ) -> AnyPublisher<DataResponse<ResultType, AFError>, Never> {
         let taskID = request.convertible.urlRequest?.url?.absoluteString ?? UUID().uuidString
 
@@ -204,7 +212,8 @@ public extension NetworkSession {
                 deduplicate: deduplicate,
                 validResponseCodes: validResponseCodes,
                 emptyResponseCodes: emptyResponseCodes,
-                emptyResponseMethods: emptyResponseMethods
+                emptyResponseMethods: emptyResponseMethods,
+                cacheTimeout: cacheTimeout
             )
         }
         .eraseToAnyPublisher()
@@ -222,6 +231,7 @@ public extension NetworkSession {
     ///   - validResponseCodes: A set of valid HTTP response codes. Default is all codes from 200 to 299.
     ///   - emptyResponseCodes: A set of HTTP response codes that indicate an empty response. Default is the `DecodableResponseSerializer` default empty response codes for the specified `ResultType`.
     ///   - emptyResponseMethods: A set of HTTP methods that indicate an empty response. Default is the `DecodableResponseSerializer` default empty request methods for the specified `ResultType`.
+    ///   - cacheTimeout: The time interval to cache the successful response. Default is `0` (no cache).
     /// - Returns: A Publisher of `DataResponse` containing the result of the request, which includes either the decoded result of type `ResultType` or an `AFError`.
     func execute<ResultType: Decodable>(
         endpoint: Endpoint,
@@ -229,7 +239,8 @@ public extension NetworkSession {
         deduplicate: Bool = true,
         validResponseCodes: Set<Int> = Set(200..<300),
         emptyResponseCodes: Set<Int> = DecodableResponseSerializer<ResultType>.defaultEmptyResponseCodes,
-        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods,
+        cacheTimeout: TimeInterval = 0
     ) -> AnyPublisher<DataResponse<ResultType, AFError>, Never> {
         let baseUrl = base ?? baseUrl ?? ""
         let taskID = (try? endpoint.url(on: baseUrl).absoluteString) ?? UUID().uuidString
@@ -253,7 +264,8 @@ public extension NetworkSession {
                 deduplicate: deduplicate,
                 validResponseCodes: validResponseCodes,
                 emptyResponseCodes: emptyResponseCodes,
-                emptyResponseMethods: emptyResponseMethods
+                emptyResponseMethods: emptyResponseMethods,
+                cacheTimeout: cacheTimeout
             )
         }
         .eraseToAnyPublisher()
@@ -277,6 +289,7 @@ public extension NetworkSession {
     ///   - validResponseCodes: A set of valid HTTP response codes. Default is all codes from 200 to 299.
     ///   - emptyResponseCodes: A set of HTTP response codes that indicate an empty response. Default is the `DecodableResponseSerializer` default empty response codes for the specified `ResultType`.
     ///   - emptyResponseMethods: A set of HTTP methods that indicate an empty response. Default is the `DecodableResponseSerializer` default empty request methods for the specified `ResultType`.
+    ///   - cacheTimeout: The time interval to cache the successful response. Default is `0` (no cache).
     /// - Returns: A Publisher of `ResultType` or an `AFError`.
     func execute<ResultType: Decodable>(
         endpoint: Endpoint,
@@ -284,7 +297,8 @@ public extension NetworkSession {
         deduplicate: Bool = true,
         validResponseCodes: Set<Int> = Set(200..<300),
         emptyResponseCodes: Set<Int> = DecodableResponseSerializer<ResultType>.defaultEmptyResponseCodes,
-        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods,
+        cacheTimeout: TimeInterval = 0
     ) -> AnyPublisher<ResultType, AFError> {
         let baseUrl = base ?? baseUrl ?? ""
         let taskID = (try? endpoint.url(on: baseUrl).absoluteString) ?? UUID().uuidString
@@ -301,7 +315,8 @@ public extension NetworkSession {
                 deduplicate: deduplicate,
                 validResponseCodes: validResponseCodes,
                 emptyResponseCodes: emptyResponseCodes,
-                emptyResponseMethods: emptyResponseMethods
+                emptyResponseMethods: emptyResponseMethods,
+                cacheTimeout: cacheTimeout
             )
 
             switch dataResponse.result {
@@ -327,13 +342,15 @@ public extension NetworkSession {
     ///   - validResponseCodes: A set of valid HTTP response codes. Default is all codes from 200 to 299.
     ///   - emptyResponseCodes: A set of HTTP response codes that indicate an empty response. Default is the `DecodableResponseSerializer` default empty response codes for the specified `ResultType`.
     ///   - emptyResponseMethods: A set of HTTP methods that indicate an empty response. Default is the `DecodableResponseSerializer` default empty request methods for the specified `ResultType`.
+    ///   - cacheTimeout: The time interval to cache the successful response. Default is `0` (no cache).
     /// - Returns: A Publisher of `ResultType` or an `AFError`.
     func execute<ResultType: Decodable>(
         request: DataRequest,
         deduplicate: Bool = true,
         validResponseCodes: Set<Int> = Set(200..<300),
         emptyResponseCodes: Set<Int> = DecodableResponseSerializer<ResultType>.defaultEmptyResponseCodes,
-        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods
+        emptyResponseMethods: Set<HTTPMethod> = DecodableResponseSerializer<ResultType>.defaultEmptyRequestMethods,
+        cacheTimeout: TimeInterval = 0
     ) -> AnyPublisher<ResultType, AFError> {
         let taskID = request.convertible.urlRequest?.url?.absoluteString ?? UUID().uuidString
 
@@ -348,7 +365,8 @@ public extension NetworkSession {
                 deduplicate: deduplicate,
                 validResponseCodes: validResponseCodes,
                 emptyResponseCodes: emptyResponseCodes,
-                emptyResponseMethods: emptyResponseMethods
+                emptyResponseMethods: emptyResponseMethods,
+                cacheTimeout: cacheTimeout
             )
 
             switch dataResponse.result {

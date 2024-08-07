@@ -18,7 +18,7 @@ actor RequestExecutor {
         }
     }()
 
-    private var runningRequestTasks: [String: Any] = [:]
+    private var runningRequestTasks: [String: ExecutorTask] = [:]
 
     func execute<SuccessType: Decodable>(
         _ request: DataRequest,
@@ -26,7 +26,8 @@ actor RequestExecutor {
         deduplicate: Bool,
         validResponseCodes: Set<Int>,
         emptyResponseCodes: Set<Int>,
-        emptyResponseMethods: Set<HTTPMethod>
+        emptyResponseMethods: Set<HTTPMethod>,
+        cacheTimeout: TimeInterval
     ) async -> DataResponse<SuccessType, AFError> {
         let randomUUID = UUID().uuidString
         return await execute(
@@ -34,43 +35,60 @@ actor RequestExecutor {
             taskID: deduplicate ? taskID : randomUUID,
             validResponseCodes: validResponseCodes,
             emptyResponseCodes: emptyResponseCodes,
-            emptyResponseMethods: emptyResponseMethods
+            emptyResponseMethods: emptyResponseMethods,
+            cacheTimeout: cacheTimeout
         )
     }
 
-    private func execute<SuccessType: Decodable & Sendable>(
+    private func execute<SuccessType: Decodable>(
         _ request: DataRequest,
         taskID: String,
         validResponseCodes: Set<Int>,
         emptyResponseCodes: Set<Int>,
-        emptyResponseMethods: Set<HTTPMethod>
+        emptyResponseMethods: Set<HTTPMethod>,
+        cacheTimeout: TimeInterval
     ) async -> DataResponse<SuccessType, AFError> {
+        runningRequestTasks = runningRequestTasks.filter { !$0.value.exceedsTimeout }
+
         if let runningTask = runningRequestTasks[taskID] {
-            let executorTask = runningTask as! ExecutorTask<SuccessType>
             logger.log(level: .info, message: "🚀 taskID: \(taskID) Cached value used")
-            return await executorTask.task.value
+            return await runningTask.task.value.map { $0 as! SuccessType }
         } else {
-            let requestTask = Task {
-                return await request.goodifyAsync(
+            let requestTask = Task<DataResponse<Decodable & Sendable, AFError>, Never> {
+                let result: DataResponse<SuccessType, AFError> = await request.goodifyAsync(
                     validResponseCodes: validResponseCodes,
                     emptyResponseCodes: emptyResponseCodes,
                     emptyResponseMethods: emptyResponseMethods
-                ) as DataResponse<SuccessType, AFError>
+                )
+
+                return result.map { $0 as Decodable }
             }
 
             logger.log(level: .info, message: "🚀 taskID: \(taskID): Task created")
             let executorTask: ExecutorTask = ExecutorTask(
                 taskID: taskID,
-                task: requestTask
+                task: requestTask,
+                cacheTimeout: cacheTimeout
             )
 
             runningRequestTasks[taskID] = executorTask
 
-            let result = await requestTask.value
-            runningRequestTasks[taskID] = nil
+            let dataResponse = await requestTask.value
+            switch dataResponse.result {
+            case .success:
+                logger.log(level: .info, message: "🚀 taskID: \(taskID): Task finished successfully")
+                if cacheTimeout > 0 {
+                    runningRequestTasks[taskID]?.finishDate = Date()
+                } else {
+                    runningRequestTasks[taskID] = nil
+                }
 
-            logger.log(level: .info, message: "🚀 taskID: \(taskID): Task finished successfully")
-            return result
+            case .failure:
+                logger.log(level: .error, message: "🚀 taskID: \(taskID): Task finished with error")
+                runningRequestTasks[taskID] = nil
+            }
+
+            return dataResponse.map { $0 as! SuccessType }
         }
     }
 

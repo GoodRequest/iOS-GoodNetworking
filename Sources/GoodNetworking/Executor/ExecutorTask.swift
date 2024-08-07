@@ -8,15 +8,23 @@
 import Foundation
 import Alamofire
 
-final class ExecutorTask<T: Decodable & Sendable> {
+final class ExecutorTask {
 
     var finishDate: Date?
     let taskID: String
-    let task: Task<DataResponse<T, AFError>, Never>
+    let task: Task<DataResponse<Decodable & Sendable, AFError>, Never>
 
-    init(taskID: String, task: Task<DataResponse<T, AFError>, Never>) {
+    private let cacheTimeout: TimeInterval
+
+    var exceedsTimeout: Bool {
+        guard let finishDate else { return false }
+        return Date().timeIntervalSince(finishDate) > cacheTimeout
+    }
+
+    init(taskID: String, task: Task<DataResponse<Decodable & Sendable, AFError>, Never>, cacheTimeout: TimeInterval) {
         self.taskID = taskID
         self.task = task
+        self.cacheTimeout = cacheTimeout
     }
 
 }
