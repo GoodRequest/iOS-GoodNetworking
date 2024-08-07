@@ -67,6 +67,7 @@ actor RequestExecutor {
             runningRequestTasks[taskID] = executorTask
 
             let result = await requestTask.value
+            runningRequestTasks[taskID] = nil
 
             logger.log(level: .info, message: "🚀 taskID: \(taskID): Task finished successfully")
             return result
